@@ -73,33 +73,12 @@ export default function AddGoat() {
     const files = e.target.files
     if (!files || files.length === 0) return
 
-    setIsUploading(true)
-    try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        })
-
-        const result = await response.json()
-        if (response.ok) {
-          return result.imageUrl
-        } else {
-          throw new Error(result.error || 'Failed to upload image')
-        }
-      })
-
-      const newImageUrls = await Promise.all(uploadPromises)
-      setUploadedImages(prev => [...prev, ...newImageUrls])
-    } catch (error) {
-      console.error('Upload error:', error)
-      alert('Failed to upload one or more images')
-    } finally {
-      setIsUploading(false)
-    }
+    // Show helpful message for Vercel deployment
+    alert('File upload is not available on the live server due to Vercel limitations. Please use image URLs instead. You can upload images to free services like Imgur.com or ImgBB.com and paste the URLs below.')
+    
+    // Clear the file input
+    e.target.value = ''
+    return
   }
 
   const removeUploadedImage = (index: number) => {
