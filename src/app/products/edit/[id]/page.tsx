@@ -176,25 +176,24 @@ export default function EditGoat() {
 
     setIsUploading(true)
     try {
-      // Try Cloudinary first, fallback to ImgBB
-      let uploadedUrls: string[]
-      
-      if (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
-        const { uploadMultipleToCloudinary } = await import('@/utils/cloudinary')
-        uploadedUrls = await uploadMultipleToCloudinary(files)
-      } else {
-        // Fallback to ImgBB (works without configuration)
-        const { uploadMultipleToImgBB } = await import('@/utils/imgbb')
-        uploadedUrls = await uploadMultipleToImgBB(files)
-      }
+      // Use robust upload system with multiple fallbacks
+      const { uploadMultipleImages } = await import('@/utils/simpleUpload')
+      const uploadedUrls = await uploadMultipleImages(files)
       
       setUploadedImages(prev => [...prev, ...uploadedUrls])
       
       // Clear the file input
       e.target.value = ''
+      
+      // Show success message
+      if (uploadedUrls.length === 1) {
+        alert('Image uploaded successfully!')
+      } else {
+        alert(`${uploadedUrls.length} images uploaded successfully!`)
+      }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('Failed to upload images. Please try again or use image URLs instead.')
+      alert(`Failed to upload images: ${error}. Please try again or use smaller images.`)
     } finally {
       setIsUploading(false)
     }
