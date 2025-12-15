@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Goat {
+  id          Int      @id @default(autoincrement())
+  name        String
+  breed       String
+  age         String
+  weight      String
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  imageUrl    String?
+  // imageUrls   Json?    @default("[]")  // Uncomment after running database migration
+  isAvailable Boolean  @default(true)
+  gender      String
+  color       String?
+  healthStatus String  @default("Healthy")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("goats")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
