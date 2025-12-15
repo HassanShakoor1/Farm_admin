@@ -73,12 +73,22 @@ export default function AddGoat() {
     const files = e.target.files
     if (!files || files.length === 0) return
 
-    // Show helpful message for Vercel deployment
-    alert('File upload is not available on the live server due to Vercel limitations. Please use image URLs instead. You can upload images to free services like Imgur.com or ImgBB.com and paste the URLs below.')
-    
-    // Clear the file input
-    e.target.value = ''
-    return
+    setIsUploading(true)
+    try {
+      // Import Cloudinary utility
+      const { uploadMultipleToCloudinary } = await import('@/utils/cloudinary')
+      
+      const uploadedUrls = await uploadMultipleToCloudinary(files)
+      setUploadedImages(prev => [...prev, ...uploadedUrls])
+      
+      // Clear the file input
+      e.target.value = ''
+    } catch (error) {
+      console.error('Upload error:', error)
+      alert('Failed to upload images. Please make sure Cloudinary is configured or use image URLs instead.')
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const removeUploadedImage = (index: number) => {
