@@ -238,17 +238,24 @@ export default function AddVideoPage() {
                     <div className="space-y-1">
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4' }))}
+                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }))}
                         className="block text-xs text-blue-600 hover:text-blue-800 underline"
                       >
-                        Sample Video 1 (720p, 1MB)
+                        Big Buck Bunny (Test Video)
                       </button>
                       <button
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4' }))}
+                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' }))}
                         className="block text-xs text-blue-600 hover:text-blue-800 underline"
                       >
-                        Sample Video 2 (Small MP4)
+                        Elephants Dream (Test Video)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4' }))}
+                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        W3Schools Sample Video
                       </button>
                     </div>
                   </div>
