@@ -1,12 +1,24 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { Upload, Play, Image as ImageIcon } from 'lucide-react'
 import AdminNavigation from '@/components/AdminNavigation'
 
-export default function AddVideoPage() {
+interface Video {
+  id: number
+  title: string
+  description: string | null
+  videoUrl: string
+  thumbnailUrl: string | null
+  isActive: boolean
+}
+
+export default function EditVideoPage() {
   const router = useRouter()
+  const params = useParams()
+  const videoId = params.id as string
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -14,8 +26,38 @@ export default function AddVideoPage() {
     thumbnailUrl: '',
     isActive: true
   })
+  const [loading, setLoading] = useState(true)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
+
+  useEffect(() => {
+    fetchVideo()
+  }, [videoId])
+
+  const fetchVideo = async () => {
+    try {
+      const response = await fetch(`/api/videos/${videoId}`)
+      if (response.ok) {
+        const video: Video = await response.json()
+        setFormData({
+          title: video.title,
+          description: video.description || '',
+          videoUrl: video.videoUrl,
+          thumbnailUrl: video.thumbnailUrl || '',
+          isActive: video.isActive
+        })
+      } else {
+        alert('Failed to load video')
+        router.push('/videos')
+      }
+    } catch (error) {
+      console.error('Error fetching video:', error)
+      alert('Error loading video')
+      router.push('/videos')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -79,13 +121,13 @@ export default function AddVideoPage() {
     e.preventDefault()
     
     if (!formData.title || !formData.videoUrl) {
-      alert('Please provide a title and upload a video')
+      alert('Please provide a title and video URL')
       return
     }
 
     try {
-      const response = await fetch('/api/videos', {
-        method: 'POST',
+      const response = await fetch(`/api/videos/${videoId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -96,12 +138,20 @@ export default function AddVideoPage() {
         router.push('/videos')
       } else {
         const error = await response.json()
-        alert(`Failed to create video: ${error.error}`)
+        alert(`Failed to update video: ${error.error}`)
       }
     } catch (error) {
-      console.error('Error creating video:', error)
-      alert('Error creating video')
+      console.error('Error updating video:', error)
+      alert('Error updating video')
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
   }
 
   return (
@@ -110,8 +160,8 @@ export default function AddVideoPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Upload New Video</h1>
-          <p className="text-gray-600 mt-2">Add a new video to your goat farm reels</p>
+          <h1 className="text-3xl font-bold text-gray-900">Edit Video</h1>
+          <p className="text-gray-600 mt-2">Update your goat farm video</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -170,10 +220,29 @@ export default function AddVideoPage() {
             <h2 className="text-lg font-medium text-gray-900 mb-4">Video Upload</h2>
             
             <div className="space-y-6">
+              {/* Current Video */}
+              {formData.videoUrl && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Video
+                  </label>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <a
+                      href={formData.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm break-all"
+                    >
+                      {formData.videoUrl}
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {/* Video Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🎬 Upload Video File
+                  🎬 Upload New Video File
                 </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
                   <input
@@ -197,7 +266,7 @@ export default function AddVideoPage() {
                       <div className="flex flex-col items-center">
                         <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
                         <p className="text-sm text-gray-600">
-                          Click to upload video or drag and drop
+                          Click to upload new video or drag and drop
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
                           MP4, WebM, MOV up to 200MB
@@ -206,23 +275,6 @@ export default function AddVideoPage() {
                     )}
                   </label>
                 </div>
-                
-                {formData.videoUrl && (
-                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-center">
-                      <Play className="h-5 w-5 text-green-600 mr-2" />
-                      <span className="text-sm text-green-800">Video uploaded successfully!</span>
-                    </div>
-                    <a
-                      href={formData.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800 mt-1 block"
-                    >
-                      Preview video
-                    </a>
-                  </div>
-                )}
               </div>
 
               {/* Video URL Input (Alternative) */}
@@ -284,7 +336,7 @@ export default function AddVideoPage() {
               disabled={!formData.title || !formData.videoUrl}
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Create Video
+              Update Video
             </button>
           </div>
         </form>

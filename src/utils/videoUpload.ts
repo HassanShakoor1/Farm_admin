@@ -50,43 +50,73 @@ export function validateVideoFile(file: File): { valid: boolean; error?: string 
   return { valid: true }
 }
 
-// Generate video thumbnail from video file
+// Generate video thumbnail from video file (client-side only)
 export function generateVideoThumbnail(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const video = document.createElement('video')
-    const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
-    
-    video.onloadedmetadata = () => {
-      // Set canvas size
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      
-      // Seek to 1 second or 10% of video duration
-      video.currentTime = Math.min(1, video.duration * 0.1)
+    // Check if we're in the browser
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      reject(new Error('Thumbnail generation only available in browser'))
+      return
     }
-    
-    video.onseeked = () => {
-      // Draw video frame to canvas
-      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    try {
+      const video = document.createElement('video')
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
       
-      // Convert to base64
-      const thumbnail = canvas.toDataURL('image/jpeg', 0.8)
-      resolve(thumbnail)
+      if (!ctx) {
+        reject(new Error('Canvas context not available'))
+        return
+      }
       
-      // Cleanup
-      video.remove()
-      canvas.remove()
+      video.onloadedmetadata = () => {
+        try {
+          // Set canvas size
+          canvas.width = video.videoWidth || 640
+          canvas.height = video.videoHeight || 480
+          
+          // Seek to 1 second or 10% of video duration
+          video.currentTime = Math.min(1, video.duration * 0.1)
+        } catch (error) {
+          reject(new Error('Failed to load video metadata'))
+        }
+      }
+      
+      video.onseeked = () => {
+        try {
+          // Draw video frame to canvas
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          
+          // Convert to base64
+          const thumbnail = canvas.toDataURL('image/jpeg', 0.8)
+          resolve(thumbnail)
+          
+          // Cleanup
+          video.remove()
+          canvas.remove()
+        } catch (error) {
+          reject(new Error('Failed to generate thumbnail'))
+        }
+      }
+      
+      video.onerror = () => {
+        reject(new Error('Failed to load video'))
+        video.remove()
+        canvas.remove()
+      }
+      
+      // Set timeout to prevent hanging
+      setTimeout(() => {
+        reject(new Error('Thumbnail generation timeout'))
+        video.remove()
+        canvas.remove()
+      }, 10000)
+      
+      // Load video
+      video.src = URL.createObjectURL(file)
+      video.load()
+    } catch (error) {
+      reject(new Error('Failed to create video element'))
     }
-    
-    video.onerror = () => {
-      reject(new Error('Failed to generate thumbnail'))
-      video.remove()
-      canvas.remove()
-    }
-    
-    // Load video
-    video.src = URL.createObjectURL(file)
-    video.load()
   })
 }
