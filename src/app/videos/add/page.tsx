@@ -29,6 +29,14 @@ export default function AddVideoPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Check file size before upload
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      alert(`File too large! Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.\n\nPlease:\n1. Use a video URL instead (recommended)\n2. Or compress your video to under 10MB`)
+      e.target.value = '' // Clear file input
+      return
+    }
+
     setIsUploading(true)
     setUploadProgress('Uploading video...')
 
@@ -199,15 +207,69 @@ export default function AddVideoPage() {
           </div>
 
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Video Upload</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Video Source</h2>
             
             <div className="space-y-6">
-              {/* Video Upload */}
+              {/* Video URL Input (Primary Method) */}
+              <div>
+                <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                  🔗 Video URL (Recommended)
+                </label>
+                <input
+                  type="url"
+                  id="videoUrl"
+                  name="videoUrl"
+                  value={formData.videoUrl}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="https://example.com/video.mp4"
+                />
+                <div className="mt-2 text-sm text-gray-600">
+                  <p className="font-medium mb-1">✅ Supported sources:</p>
+                  <ul className="text-xs space-y-1 ml-4">
+                    <li>• Direct video URLs (.mp4, .webm, .mov)</li>
+                    <li>• YouTube videos (paste any YouTube URL)</li>
+                    <li>• Vimeo videos</li>
+                    <li>• Google Drive shared videos</li>
+                    <li>• Any public video hosting service</li>
+                  </ul>
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                    <p className="font-medium text-blue-800 mb-1">🎬 Try these sample videos:</p>
+                    <div className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4' }))}
+                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Sample Video 1 (720p, 1MB)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4' }))}
+                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Sample Video 2 (Small MP4)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* File Upload (Secondary Method) */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">OR Upload Small File</span>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🎬 Upload Video File
+                  🎬 Upload Video File (Max 10MB)
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
                   <input
                     type="file"
                     id="videoFile"
@@ -222,67 +284,31 @@ export default function AddVideoPage() {
                   >
                     {isUploading ? (
                       <div className="flex flex-col items-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2"></div>
                         <p className="text-sm text-gray-600">{uploadProgress}</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                        <Upload className="mx-auto h-6 w-6 text-gray-400 mb-2" />
                         <p className="text-sm text-gray-600">
-                          Click to upload video or drag and drop
+                          Click to upload small video file
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          MP4, WebM, MOV up to 200MB
+                        <p className="text-xs text-red-500 mt-1">
+                          ⚠️ Limited to 10MB due to server constraints
                         </p>
                       </div>
                     )}
                   </label>
                 </div>
                 
-                {formData.videoUrl && (
+                {formData.videoUrl && formData.videoUrl.startsWith('/') && (
                   <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
                     <div className="flex items-center">
                       <Play className="h-5 w-5 text-green-600 mr-2" />
                       <span className="text-sm text-green-800">Video uploaded successfully!</span>
                     </div>
-                    <a
-                      href={formData.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800 mt-1 block"
-                    >
-                      Preview video
-                    </a>
                   </div>
                 )}
-              </div>
-
-              {/* Video URL Input (Alternative) */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">OR</span>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                  🔗 Video URL
-                </label>
-                <input
-                  type="url"
-                  id="videoUrl"
-                  name="videoUrl"
-                  value={formData.videoUrl}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/video.mp4"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  You can also paste a direct video URL from YouTube, Vimeo, or any video hosting service
-                </p>
               </div>
 
               {/* Thumbnail Preview */}

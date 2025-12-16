@@ -20,12 +20,12 @@ export async function POST(request: NextRequest) {
 
     console.log(`File received: ${file.name}, size: ${file.size}, type: ${file.type}`)
 
-    // Validate file size (100MB limit)
-    const maxSize = 100 * 1024 * 1024 // 100MB
+    // Validate file size (10MB limit for Vercel)
+    const maxSize = 10 * 1024 * 1024 // 10MB (Vercel limit)
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'Video file too large. Maximum size is 100MB.' },
-        { status: 400 }
+        { error: 'Video file too large. Maximum size is 10MB for local upload.' },
+        { status: 413 }
       )
     }
 

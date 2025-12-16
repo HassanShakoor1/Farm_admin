@@ -71,6 +71,14 @@ export default function EditVideoPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Check file size before upload
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      alert(`File too large! Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.\n\nPlease:\n1. Use a video URL instead (recommended)\n2. Or compress your video to under 10MB`)
+      e.target.value = '' // Clear file input
+      return
+    }
+
     setIsUploading(true)
     setUploadProgress('Uploading video...')
 

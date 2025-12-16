@@ -17,12 +17,12 @@ export async function POST(request: NextRequest) {
 
     console.log(`File received: ${file.name}, size: ${file.size}, type: ${file.type}`)
 
-    // Validate file size (50MB limit for better reliability)
-    const maxSize = 50 * 1024 * 1024 // 50MB (reduced for better success rate)
+    // Validate file size (20MB limit for Imgur)
+    const maxSize = 20 * 1024 * 1024 // 20MB (Imgur practical limit)
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'Video file too large. Maximum size is 50MB for reliable upload.' },
-        { status: 400 }
+        { error: 'Video file too large. Maximum size is 20MB for online upload.' },
+        { status: 413 }
       )
     }
 
