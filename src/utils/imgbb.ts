@@ -12,7 +12,7 @@ export async function uploadToImgur(file: File): Promise<string> {
       },
       body: formData,
     })
-    
+
     const data = await response.json()
     
     if (response.ok && data.success) {
