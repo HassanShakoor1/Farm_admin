@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Drawer, IconButton, List, ListItem, Box } from '@mui/material'
-import { Menu as MenuIcon, Close as CloseIcon, Dashboard, Add, Settings, Message, Visibility, VideoLibrary } from '@mui/icons-material'
+import { Menu as MenuIcon, Close as CloseIcon, Dashboard, Add, Settings, Message, Visibility, VideoLibrary, YouTube } from '@mui/icons-material'
 
 interface AdminNavigationProps {
   className?: string
@@ -22,6 +22,7 @@ export default function AdminNavigation({ className = '' }: AdminNavigationProps
     { href: '/', label: 'Dashboard', icon: <Dashboard /> },
     { href: '/products/add', label: 'Add New Goat', icon: <Add /> },
     { href: '/videos', label: 'Video Management', icon: <VideoLibrary /> },
+    { href: '/youtube-helper', label: 'YouTube Helper', icon: <YouTube /> },
     { href: '/settings', label: 'Settings', icon: <Settings /> },
   ]
 

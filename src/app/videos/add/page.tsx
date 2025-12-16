@@ -233,30 +233,45 @@ export default function AddVideoPage() {
                     <li>• Google Drive shared videos</li>
                     <li>• Any public video hosting service</li>
                   </ul>
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                    <p className="font-medium text-blue-800 mb-1">🎬 Try these sample videos:</p>
-                    <div className="space-y-1">
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }))}
-                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                      >
-                        Big Buck Bunny (Test Video)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' }))}
-                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                      >
-                        Elephants Dream (Test Video)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4' }))}
-                        className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                      >
-                        W3Schools Sample Video
-                      </button>
+                  <div className="mt-3 space-y-3">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded">
+                      <p className="font-medium text-blue-800 mb-1">🎬 Try these sample videos:</p>
+                      <div className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }))}
+                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Big Buck Bunny (Test Video)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' }))}
+                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                        >
+                          Elephants Dream (Test Video)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4' }))}
+                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
+                        >
+                          W3Schools Sample Video
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-green-50 border border-green-200 rounded">
+                      <p className="font-medium text-green-800 mb-1">📱 For iPhone 17 Pro Max Videos:</p>
+                      <div className="space-y-1">
+                        <a
+                          href="/youtube-helper"
+                          className="block text-xs text-green-600 hover:text-green-800 underline font-medium"
+                        >
+                          → Use YouTube Helper (Unlimited Size!)
+                        </a>
+                        <p className="text-xs text-green-700">Upload to YouTube, get direct URL - no size limits!</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -303,6 +318,10 @@ export default function AddVideoPage() {
                         <p className="text-xs text-red-500 mt-1">
                           ⚠️ Limited to 10MB due to server constraints
                         </p>
+                        <div className="mt-2 text-xs text-gray-600">
+                          <p className="font-medium">📱 For iPhone 17 Pro Max videos:</p>
+                          <p>Use the <a href="/youtube-helper" className="text-blue-600 underline">YouTube Helper</a> for unlimited size!</p>
+                        </div>
                       </div>
                     )}
                   </label>
