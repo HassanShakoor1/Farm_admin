@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Server-side video upload to Imgur
+// Server-side video upload with multiple fallback options
 export async function POST(request: NextRequest) {
   try {
+    console.log('Video upload request received')
+    
     const formData = await request.formData()
     const file = formData.get('video') as File
     
@@ -13,11 +15,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (200MB limit)
-    const maxSize = 200 * 1024 * 1024 // 200MB
+    console.log(`File received: ${file.name}, size: ${file.size}, type: ${file.type}`)
+
+    // Validate file size (50MB limit for better reliability)
+    const maxSize = 50 * 1024 * 1024 // 50MB (reduced for better success rate)
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'Video file too large. Maximum size is 200MB.' },
+        { error: 'Video file too large. Maximum size is 50MB for reliable upload.' },
         { status: 400 }
       )
     }
@@ -31,40 +35,62 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert file to buffer for upload
+    // Convert file to base64 for more reliable upload
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+    const base64 = buffer.toString('base64')
 
-    // Upload to Imgur
-    const imgurFormData = new FormData()
-    imgurFormData.append('video', new Blob([buffer], { type: file.type }))
+    console.log('Attempting upload to Imgur...')
 
-    const response = await fetch('https://api.imgur.com/3/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Client-ID 546c25a59c58ad7', // Public Imgur client ID
-      },
-      body: imgurFormData,
-    })
+    // Try uploading to Imgur with base64
+    try {
+      const imgurFormData = new FormData()
+      imgurFormData.append('image', base64)
+      imgurFormData.append('type', 'base64')
 
-    const data = await response.json()
-
-    if (response.ok && data.success) {
-      return NextResponse.json({
-        videoUrl: data.data.link,
-        message: 'Video uploaded successfully'
+      const response = await fetch('https://api.imgur.com/3/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Client-ID 546c25a59c58ad7',
+        },
+        body: imgurFormData,
       })
-    } else {
-      console.error('Imgur upload error:', data)
-      return NextResponse.json(
-        { error: data.data?.error || 'Failed to upload video to Imgur' },
-        { status: 500 }
-      )
+
+      console.log(`Imgur response status: ${response.status}`)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Imgur API error:', errorText)
+        throw new Error(`Imgur API returned ${response.status}: ${errorText}`)
+      }
+
+      const data = await response.json()
+      console.log('Imgur response:', data)
+
+      if (data.success && data.data && data.data.link) {
+        return NextResponse.json({
+          videoUrl: data.data.link,
+          message: 'Video uploaded successfully to Imgur'
+        })
+      } else {
+        throw new Error(data.data?.error || 'Imgur upload failed')
+      }
+    } catch (imgurError) {
+      console.error('Imgur upload failed:', imgurError)
+      
+      // Fallback: Return base64 data URL for local testing
+      const dataUrl = `data:${file.type};base64,${base64}`
+      
+      return NextResponse.json({
+        videoUrl: dataUrl,
+        message: 'Video converted to base64 (fallback method)',
+        warning: 'Using fallback method - video may not work on all devices'
+      })
     }
   } catch (error) {
     console.error('Video upload error:', error)
     return NextResponse.json(
-      { error: 'Internal server error during video upload' },
+      { error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     )
   }

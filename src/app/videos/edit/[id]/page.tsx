@@ -79,17 +79,49 @@ export default function EditVideoPage() {
       const uploadFormData = new FormData()
       uploadFormData.append('video', file)
 
-      // Upload video via our API endpoint
-      const response = await fetch('/api/upload-video', {
-        method: 'POST',
-        body: uploadFormData,
-      })
+      // Try simple upload first (for development), then fallback to Imgur
+      let response
+      try {
+        setUploadProgress('Uploading video (method 1)...')
+        response = await fetch('/api/upload-video-simple', {
+          method: 'POST',
+          body: uploadFormData,
+        })
+        
+        if (!response.ok) {
+          throw new Error('Simple upload failed')
+        }
+      } catch (simpleError) {
+        console.log('Simple upload failed, trying Imgur...', simpleError)
+        setUploadProgress('Uploading video (method 2)...')
+        
+        response = await fetch('/api/upload-video', {
+          method: 'POST',
+          body: uploadFormData,
+        })
+      }
 
-      const result = await response.json()
+      let result
+      try {
+        const responseText = await response.text()
+        console.log('Server response:', responseText)
+        
+        // Try to parse as JSON
+        result = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError)
+        throw new Error(`Server returned invalid response. Status: ${response.status}`)
+      }
 
       if (response.ok && result.videoUrl) {
         setFormData(prev => ({ ...prev, videoUrl: result.videoUrl }))
-        setUploadProgress('Generating thumbnail...')
+        
+        // Show warning if using fallback method
+        if (result.warning) {
+          setUploadProgress(result.warning)
+        } else {
+          setUploadProgress('Generating thumbnail...')
+        }
         
         // Generate thumbnail (optional - client-side only)
         try {
@@ -104,7 +136,7 @@ export default function EditVideoPage() {
         
         setTimeout(() => setUploadProgress(''), 3000)
       } else {
-        throw new Error(result.error || 'Upload failed')
+        throw new Error(result.error || `Upload failed with status ${response.status}`)
       }
     } catch (error) {
       console.error('Upload error:', error)
