@@ -61,13 +61,13 @@ model Video {
 model VideoLike {
   id        Int      @id @default(autoincrement())
   videoId   Int
-  ipAddress String   // Store IP to prevent multiple likes from same user
+  deviceId  String   // Store unique device ID to track likes per device
   createdAt DateTime @default(now())
 
   // Relations
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
-  // Unique constraint to prevent duplicate likes from same IP
-  @@unique([videoId, ipAddress])
+  // Unique constraint to prevent duplicate likes from same device
+  @@unique([videoId, deviceId])
   @@map("video_likes")
 }
