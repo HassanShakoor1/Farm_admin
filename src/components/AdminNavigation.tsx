@@ -76,8 +76,8 @@ export default function AdminNavigation({ className = '' }: AdminNavigationProps
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <img src="/logo.jpeg" alt="Zohan Goat Farm Logo" className="h-10 w-10 rounded-full object-cover mr-3" />
-              <div className="text-xl md:text-2xl font-bold text-white">
+              <img src="/logo.jpeg" alt="Zohan Goat Farm Logo" className="h-9 w-9 rounded-full object-cover mr-2" />
+              <div className="text-base md:text-lg font-semibold text-white">
                 Zohan Goat Farm - Admin
               </div>
             </div>
@@ -89,13 +89,13 @@ export default function AdminNavigation({ className = '' }: AdminNavigationProps
                   <Link 
                     key={item.href}
                     href={item.href} 
-                    className={`flex items-center px-4 py-2 rounded-lg text-base font-semibold transition-all transform hover:scale-105 ${
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       isActive(item.href)
-                        ? 'bg-white/20 text-white shadow-lg backdrop-blur-sm'
+                        ? 'bg-white/20 text-white'
                         : 'text-white/90 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <span className="mr-2">{item.icon}</span>
+                    <span className="mr-1.5 text-lg">{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}

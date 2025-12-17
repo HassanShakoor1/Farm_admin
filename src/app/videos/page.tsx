@@ -102,10 +102,10 @@ export default function VideosPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {videos.map((video) => (
-              <div key={video.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-video bg-gray-200 relative">
+              <div key={video.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow overflow-hidden">
+                <div className="aspect-video bg-gray-100 relative">
                   {video.thumbnailUrl ? (
                     <img
                       src={video.thumbnailUrl}
@@ -114,58 +114,56 @@ export default function VideosPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Play className="h-16 w-16 text-gray-400" />
+                      <Play className="h-10 w-10 text-gray-400" />
                     </div>
                   )}
-                  <div className="absolute top-2 right-2">
-                    {video.isActive ? (
-                      <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="bg-gray-500 text-white px-2 py-1 rounded-full text-xs">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
+                  {video.isActive ? (
+                    <span className="absolute top-1.5 right-1.5 bg-green-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="absolute top-1.5 right-1.5 bg-gray-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">
+                      Inactive
+                    </span>
+                  )}
                 </div>
                 
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">{video.title}</h3>
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">{video.title}</h3>
                   {video.description && (
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{video.description}</p>
+                    <p className="text-gray-600 text-xs mb-2 line-clamp-1">{video.description}</p>
                   )}
                   
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                     <div className="flex items-center">
-                      <Heart className="h-4 w-4 text-red-500 mr-1" />
-                      <span>{video.likesCount} likes</span>
+                      <Heart className="h-3 w-3 text-red-500 mr-1" />
+                      <span>{video.likesCount}</span>
                     </div>
                     <span>{new Date(video.createdAt).toLocaleDateString()}</span>
                   </div>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex gap-1">
                     <a
                       href={video.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                      className="flex-1 inline-flex items-center justify-center px-2 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors text-xs"
                     >
-                      <Eye className="h-4 w-4 mr-1" />
+                      <Eye className="h-3 w-3 mr-1" />
                       View
                     </a>
                     <Link
                       href={`/videos/edit/${video.id}`}
-                      className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm"
+                      className="flex-1 inline-flex items-center justify-center px-2 py-1.5 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors text-xs"
                     >
-                      <Edit className="h-4 w-4 mr-1" />
+                      <Edit className="h-3 w-3 mr-1" />
                       Edit
                     </Link>
                     <button
                       onClick={() => handleDelete(video.id)}
-                      className="flex-1 inline-flex items-center justify-center px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm"
+                      className="flex-1 inline-flex items-center justify-center px-2 py-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-xs"
                     >
-                      <Trash2 className="h-4 w-4 mr-1" />
+                      <Trash2 className="h-3 w-3 mr-1" />
                       Delete
                     </button>
                   </div>
