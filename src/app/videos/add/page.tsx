@@ -29,81 +29,45 @@ export default function AddVideoPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Check file size before upload
-    const maxSize = 10 * 1024 * 1024 // 10MB
-    if (file.size > maxSize) {
-      alert(`File too large! Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.\n\nPlease:\n1. Use a video URL instead (recommended)\n2. Or compress your video to under 10MB`)
-      e.target.value = '' // Clear file input
-      return
-    }
+    // No file size check! Accept ANY size video
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
+    console.log(`Uploading video: ${file.name} (${fileSizeMB}MB)`)
 
     setIsUploading(true)
-    setUploadProgress('Uploading video...')
+    setUploadProgress(`Preparing to upload ${fileSizeMB}MB video...`)
 
     try {
-      // Create form data for server upload
-      const uploadFormData = new FormData()
-      uploadFormData.append('video', file)
+      // Import the unlimited upload function
+      const { uploadLargeVideo } = await import('@/utils/cloudinaryUpload')
+      
+      // Upload with progress tracking
+      const videoUrl = await uploadLargeVideo(
+        file,
+        (progress) => {
+          setUploadProgress(`Uploading: ${progress}%`)
+        },
+        (status) => {
+          setUploadProgress(status)
+        }
+      )
 
-      // Try simple upload first (for development), then fallback to Imgur
-      let response
+      // Set the uploaded video URL
+      setFormData(prev => ({ ...prev, videoUrl }))
+      setUploadProgress('Upload complete! ✅')
+      
+      // Try to generate thumbnail (optional)
       try {
-        setUploadProgress('Uploading video (method 1)...')
-        response = await fetch('/api/upload-video-simple', {
-          method: 'POST',
-          body: uploadFormData,
-        })
-        
-        if (!response.ok) {
-          throw new Error('Simple upload failed')
-        }
-      } catch (simpleError) {
-        console.log('Simple upload failed, trying Imgur...', simpleError)
-        setUploadProgress('Uploading video (method 2)...')
-        
-        response = await fetch('/api/upload-video', {
-          method: 'POST',
-          body: uploadFormData,
-        })
+        setUploadProgress('Generating thumbnail...')
+        const { generateVideoThumbnail } = await import('@/utils/videoUpload')
+        const thumbnail = await generateVideoThumbnail(file)
+        setFormData(prev => ({ ...prev, thumbnailUrl: thumbnail }))
+        setUploadProgress('Upload complete with thumbnail! ✅')
+      } catch (thumbnailError) {
+        console.warn('Failed to generate thumbnail:', thumbnailError)
+        setUploadProgress('Upload complete! ✅')
       }
-
-      let result
-      try {
-        const responseText = await response.text()
-        console.log('Server response:', responseText)
-        
-        // Try to parse as JSON
-        result = JSON.parse(responseText)
-      } catch (parseError) {
-        console.error('Failed to parse response as JSON:', parseError)
-        throw new Error(`Server returned invalid response. Status: ${response.status}`)
-      }
-
-      if (response.ok && result.videoUrl) {
-        setFormData(prev => ({ ...prev, videoUrl: result.videoUrl }))
-        
-        // Show warning if using fallback method
-        if (result.warning) {
-          setUploadProgress(result.warning)
-        } else {
-          setUploadProgress('Generating thumbnail...')
-        }
-        
-        // Generate thumbnail (optional - client-side only)
-        try {
-          const { generateVideoThumbnail } = await import('@/utils/videoUpload')
-          const thumbnail = await generateVideoThumbnail(file)
-          setFormData(prev => ({ ...prev, thumbnailUrl: thumbnail }))
-          setUploadProgress('Upload complete with thumbnail!')
-        } catch (thumbnailError) {
-          console.warn('Failed to generate thumbnail:', thumbnailError)
-          setUploadProgress('Upload complete!')
-        }
-        
-        setTimeout(() => setUploadProgress(''), 3000)
-      } else {
-        throw new Error(result.error || `Upload failed with status ${response.status}`)
-      }
+      
+      setTimeout(() => setUploadProgress(''), 3000)
     } catch (error) {
       console.error('Upload error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
@@ -207,91 +171,12 @@ export default function AddVideoPage() {
           </div>
 
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Video Source</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">📱 Upload Your Video</h2>
             
             <div className="space-y-6">
-              {/* Video URL Input (Primary Method) */}
+              {/* Simple Video Upload - Unlimited Size */}
               <div>
-                <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                  🔗 Video URL (Recommended)
-                </label>
-                <input
-                  type="url"
-                  id="videoUrl"
-                  name="videoUrl"
-                  value={formData.videoUrl}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="https://example.com/video.mp4"
-                />
-                <div className="mt-2 text-sm text-gray-600">
-                  <p className="font-medium mb-1">✅ Supported sources:</p>
-                  <ul className="text-xs space-y-1 ml-4">
-                    <li>• Direct video URLs (.mp4, .webm, .mov)</li>
-                    <li>• YouTube videos (paste any YouTube URL)</li>
-                    <li>• Vimeo videos</li>
-                    <li>• Google Drive shared videos</li>
-                    <li>• Any public video hosting service</li>
-                  </ul>
-                  <div className="mt-3 space-y-3">
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded">
-                      <p className="font-medium text-blue-800 mb-1">🎬 Try these sample videos:</p>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }))}
-                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                        >
-                          Big Buck Bunny (Test Video)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4' }))}
-                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                        >
-                          Elephants Dream (Test Video)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4' }))}
-                          className="block text-xs text-blue-600 hover:text-blue-800 underline"
-                        >
-                          W3Schools Sample Video
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-green-50 border border-green-200 rounded">
-                      <p className="font-medium text-green-800 mb-1">📱 For iPhone 17 Pro Max Videos:</p>
-                      <div className="space-y-1">
-                        <a
-                          href="/youtube-helper"
-                          className="block text-xs text-green-600 hover:text-green-800 underline font-medium"
-                        >
-                          → Use YouTube Helper (Unlimited Size!)
-                        </a>
-                        <p className="text-xs text-green-700">Upload to YouTube, get direct URL - no size limits!</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* File Upload (Secondary Method) */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">OR Upload Small File</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  🎬 Upload Video File (Max 10MB)
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors bg-gradient-to-br from-blue-50 to-purple-50">
                   <input
                     type="file"
                     id="videoFile"
@@ -306,32 +191,56 @@ export default function AddVideoPage() {
                   >
                     {isUploading ? (
                       <div className="flex flex-col items-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mb-2"></div>
-                        <p className="text-sm text-gray-600">{uploadProgress}</p>
+                        <div className="relative mb-4">
+                          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+                          <Play className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-8 w-8 text-blue-600" />
+                        </div>
+                        <p className="text-lg font-medium text-gray-900 mb-2">{uploadProgress}</p>
+                        <p className="text-sm text-gray-600">Please wait...</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center">
-                        <Upload className="mx-auto h-6 w-6 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-600">
-                          Click to upload small video file
+                        <div className="bg-blue-100 rounded-full p-4 mb-4">
+                          <Upload className="h-12 w-12 text-blue-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          Upload Your iPhone Video
+                        </h3>
+                        <p className="text-lg text-blue-600 font-medium mb-2">
+                          ✅ ANY SIZE • NO COMPRESSION • FULL QUALITY
                         </p>
-                        <p className="text-xs text-red-500 mt-1">
-                          ⚠️ Limited to 10MB due to server constraints
+                        <p className="text-sm text-gray-600 mb-4">
+                          iPhone 17 Pro Max • 4K • 8K • All formats supported
                         </p>
-                        <div className="mt-2 text-xs text-gray-600">
-                          <p className="font-medium">📱 For iPhone 17 Pro Max videos:</p>
-                          <p>Use the <a href="/youtube-helper" className="text-blue-600 underline">YouTube Helper</a> for unlimited size!</p>
+                        <div className="bg-white/50 rounded-lg p-3 text-xs text-gray-700 max-w-md">
+                          <p className="font-medium mb-1">📱 Supports:</p>
+                          <p>MP4, MOV, AVI, WebM, MKV - No size limit!</p>
                         </div>
                       </div>
                     )}
                   </label>
                 </div>
                 
-                {formData.videoUrl && formData.videoUrl.startsWith('/') && (
-                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                    <div className="flex items-center">
-                      <Play className="h-5 w-5 text-green-600 mr-2" />
-                      <span className="text-sm text-green-800">Video uploaded successfully!</span>
+                {formData.videoUrl && (
+                  <div className="mt-4 p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="bg-green-500 rounded-full p-2 mr-3">
+                          <Play className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-green-900">Video Ready! ✅</p>
+                          <p className="text-sm text-green-700">Your video will appear on the public site</p>
+                        </div>
+                      </div>
+                      <a
+                        href={formData.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-green-600 hover:text-green-800 underline"
+                      >
+                        Preview
+                      </a>
                     </div>
                   </div>
                 )}
