@@ -16,6 +16,7 @@ export default function AddVideoPage() {
   })
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState('')
+  const [compressionQuality, setCompressionQuality] = useState<'medium' | 'high' | 'ultra'>('high')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -29,20 +30,50 @@ export default function AddVideoPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // No file size check! Accept ANY size video
-    const fileSizeMB = (file.size / 1024 / 1024).toFixed(1)
-    console.log(`Uploading video: ${file.name} (${fileSizeMB}MB)`)
+    const originalSizeMB = (file.size / 1024 / 1024).toFixed(1)
+    console.log(`Processing video: ${file.name} (${originalSizeMB}MB)`)
 
     setIsUploading(true)
-    setUploadProgress(`Preparing to upload ${fileSizeMB}MB video...`)
+    setUploadProgress(`Analyzing ${originalSizeMB}MB video...`)
 
     try {
-      // Import the unlimited upload function
+      let fileToUpload = file
+
+      // Automatically compress if file is large (over 50MB)
+      const { shouldCompress, compressVideo } = await import('@/utils/videoCompressor')
+      
+      if (shouldCompress(file, 50)) {
+        setUploadProgress(`Compressing ${originalSizeMB}MB video...`)
+        
+        try {
+          const result = await compressVideo(
+            file,
+            compressionQuality, // Use user-selected quality
+            (progress) => {
+              setUploadProgress(`Compressing: ${progress}%`)
+            },
+            (status) => {
+              setUploadProgress(status)
+            }
+          )
+
+          fileToUpload = result.compressedFile
+          const compressedMB = (result.compressedSize / 1024 / 1024).toFixed(1)
+          setUploadProgress(
+            `✅ Compressed ${originalSizeMB}MB → ${compressedMB}MB (${result.compressionRatio}% smaller)`
+          )
+        } catch (compressionError) {
+          console.warn('Compression failed, uploading original:', compressionError)
+          setUploadProgress('Using original video...')
+        }
+      }
+
+      // Upload the video (compressed or original)
+      setUploadProgress('Uploading to cloud...')
       const { uploadLargeVideo } = await import('@/utils/cloudinaryUpload')
       
-      // Upload with progress tracking
       const videoUrl = await uploadLargeVideo(
-        file,
+        fileToUpload,
         (progress) => {
           setUploadProgress(`Uploading: ${progress}%`)
         },
@@ -61,7 +92,7 @@ export default function AddVideoPage() {
         const { generateVideoThumbnail } = await import('@/utils/videoUpload')
         const thumbnail = await generateVideoThumbnail(file)
         setFormData(prev => ({ ...prev, thumbnailUrl: thumbnail }))
-        setUploadProgress('Upload complete with thumbnail! ✅')
+        setUploadProgress('All done! ✅')
       } catch (thumbnailError) {
         console.warn('Failed to generate thumbnail:', thumbnailError)
         setUploadProgress('Upload complete! ✅')
@@ -174,6 +205,68 @@ export default function AddVideoPage() {
             <h2 className="text-lg font-medium text-gray-900 mb-4">📱 Upload Your Video</h2>
             
             <div className="space-y-6">
+              {/* Compression Quality Selector */}
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-purple-200">
+                <label className="block text-sm font-medium text-gray-900 mb-3">
+                  🎚️ Automatic Compression Quality
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setCompressionQuality('medium')}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      compressionQuality === 'medium'
+                        ? 'border-purple-500 bg-purple-100 shadow-md'
+                        : 'border-gray-300 bg-white hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">⚡</div>
+                      <div className="font-bold text-sm">Fast</div>
+                      <div className="text-xs text-gray-600">Smaller files</div>
+                      <div className="text-xs text-gray-500 mt-1">720p • Good quality</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setCompressionQuality('high')}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      compressionQuality === 'high'
+                        ? 'border-purple-500 bg-purple-100 shadow-md'
+                        : 'border-gray-300 bg-white hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">✨</div>
+                      <div className="font-bold text-sm">Balanced</div>
+                      <div className="text-xs text-gray-600">Recommended</div>
+                      <div className="text-xs text-gray-500 mt-1">1080p • Great quality</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setCompressionQuality('ultra')}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      compressionQuality === 'ultra'
+                        ? 'border-purple-500 bg-purple-100 shadow-md'
+                        : 'border-gray-300 bg-white hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl mb-1">🎬</div>
+                      <div className="font-bold text-sm">Ultra</div>
+                      <div className="text-xs text-gray-600">Best quality</div>
+                      <div className="text-xs text-gray-500 mt-1">1080p60 • Max quality</div>
+                    </div>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600 mt-3 text-center">
+                  💡 Videos over 50MB are automatically compressed. Smaller videos upload as-is.
+                </p>
+              </div>
+
               {/* Simple Video Upload - Unlimited Size */}
               <div>
                 <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors bg-gradient-to-br from-blue-50 to-purple-50">
