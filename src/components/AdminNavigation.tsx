@@ -22,7 +22,6 @@ export default function AdminNavigation({ className = '' }: AdminNavigationProps
     { href: '/', label: 'Dashboard', icon: <Dashboard /> },
     { href: '/products/add', label: 'Add New Goat', icon: <Add /> },
     { href: '/videos', label: 'Video Management', icon: <VideoLibrary /> },
-    { href: '/youtube-helper', label: 'YouTube Helper', icon: <YouTube /> },
     { href: '/settings', label: 'Settings', icon: <Settings /> },
   ]
 

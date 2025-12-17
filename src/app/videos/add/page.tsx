@@ -39,10 +39,11 @@ export default function AddVideoPage() {
     try {
       let fileToUpload = file
 
-      // Automatically compress if file is large (over 50MB)
-      const { shouldCompress, compressVideo } = await import('@/utils/videoCompressor')
+      // Always compress videos for database storage
+      const { compressVideo } = await import('@/utils/videoCompressor')
       
-      if (shouldCompress(file, 50)) {
+      // Always compress to keep database size reasonable
+      if (file.size > 5 * 1024 * 1024) { // Compress if over 5MB
         setUploadProgress(`Compressing ${originalSizeMB}MB video...`)
         
         try {
@@ -68,23 +69,19 @@ export default function AddVideoPage() {
         }
       }
 
-      // Upload the video (compressed or original)
-      setUploadProgress('Uploading to cloud...')
-      const { uploadLargeVideo } = await import('@/utils/cloudinaryUpload')
+      // Convert to base64 for direct database storage
+      setUploadProgress('Preparing video for upload...')
       
-      const videoUrl = await uploadLargeVideo(
-        fileToUpload,
-        (progress) => {
-          setUploadProgress(`Uploading: ${progress}%`)
-        },
-        (status) => {
-          setUploadProgress(status)
-        }
-      )
+      const reader = new FileReader()
+      const videoUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(fileToUpload)
+      })
 
-      // Set the uploaded video URL
+      // Set the video data URL (base64)
       setFormData(prev => ({ ...prev, videoUrl }))
-      setUploadProgress('Upload complete! ✅')
+      setUploadProgress('Video ready! ✅')
       
       // Try to generate thumbnail (optional)
       try {
@@ -263,7 +260,7 @@ export default function AddVideoPage() {
                   </button>
                 </div>
                 <p className="text-xs text-gray-600 mt-3 text-center">
-                  💡 Videos over 50MB are automatically compressed. Smaller videos upload as-is.
+                  💡 Videos are compressed for optimal performance. No external services needed!
                 </p>
               </div>
 
