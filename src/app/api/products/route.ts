@@ -74,10 +74,20 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(goat, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating goat:', error)
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    })
     return NextResponse.json(
-      { error: 'Failed to create goat' },
+      { 
+        error: 'Failed to create goat',
+        details: error.message || 'Unknown error',
+        code: error.code || 'UNKNOWN'
+      },
       { status: 500 }
     )
   }
