@@ -19,11 +19,6 @@ export async function GET(
 
     const video = await prisma.video.findUnique({
       where: { id },
-      include: {
-        _count: {
-          select: { likes: true }
-        }
-      }
     })
 
     if (!video) {
